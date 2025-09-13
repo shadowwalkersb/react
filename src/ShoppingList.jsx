@@ -1,121 +1,146 @@
 import React, { useState, useEffect } from "react";
 
 export default function ShoppingList() {
-  const catalog = ["Milk", "Bread", "Eggs", "Butter", "Cheese", "Apples"];
+  const catalog = [
+    "Milk","Bread","Eggs","Butter","Cheese","Yogurt",
+    "Apples","Bananas","Oranges","Tomatoes","Potatoes",
+    "Onions","Carrots","Lettuce","Chicken","Beef",
+    "Fish","Rice","Pasta","Cereal","Coffee","Tea",
+    "Sugar","Salt","Cooking Oil","Flour","Baking Powder"
+  ];
 
   const [items, setItems] = useState([]);
   const [input, setInput] = useState("");
+  const [qty, setQty] = useState(1);
+  const [catalogQty, setCatalogQty] = useState(catalog.reduce((acc,c)=>({...acc,[c]:1}),{}));
+  const [dragIndex, setDragIndex] = useState(null);
 
-  // Load from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem("shoppingList");
-    if (saved) setItems(JSON.parse(saved));
+    if(saved) setItems(JSON.parse(saved));
   }, []);
 
-  // Save to localStorage on change
   useEffect(() => {
     localStorage.setItem("shoppingList", JSON.stringify(items));
   }, [items]);
 
-  const addItem = (name) => {
-    if (!name.trim()) return;
-    const newItem = { id: Date.now(), name, checked: false };
+  const addItem = (name, quantity=1) => {
+    if(!name.trim()) return;
+    const newItem = { id: Date.now().toString(), name, quantity, checked:false };
     setItems([...items, newItem]);
-    setInput("");
   };
 
   const toggleItem = (id) => {
-    setItems(
-      items.map((item) =>
-        item.id === id ? { ...item, checked: !item.checked } : item
-      )
-    );
+    setItems(prev => {
+      const newItems = prev.map(i=>i.id===id ? {...i, checked:!i.checked}:i);
+      const unchecked = newItems.filter(i=>!i.checked);
+      const checked = newItems.filter(i=>i.checked);
+      return [...unchecked,...checked];
+    });
   };
 
-  const removeItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
+  const removeItem = (id) => setItems(items.filter(i=>i.id!==id));
+
+  const onDragStart = (index) => {
+    if(items[index].checked) return;
+    setDragIndex(index);
+  };
+
+  const onDragOver = (e) => e.preventDefault();
+
+  const onDrop = (index) => {
+    if(dragIndex === null || dragIndex === index) return;
+    const newItems = [...items];
+    const [moved] = newItems.splice(dragIndex,1);
+    newItems.splice(index,0,moved);
+    setItems(newItems);
+    setDragIndex(null);
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "500px",
-        margin: "0 auto",
-        padding: "1rem",
-        fontFamily: "sans-serif",
-      }}
-    >
-      <h2 style={{ textAlign: "center" }}>🛒 Shopping List</h2>
+    <div style={{ maxWidth:"900px", margin:"0 auto", padding:"1rem", fontFamily:"sans-serif" }}>
+      <h2 style={{ textAlign:"center" }}>🛒 Shopping List</h2>
 
-      {/* Catalog Buttons */}
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-        {catalog.map((c) => (
-          <button
-            key={c}
-            onClick={() => addItem(c)}
-            style={{
-              flex: "1 1 auto",
-              padding: "0.5rem",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              background: "#f8f8f8",
-            }}
-          >
-            {c}
-          </button>
-        ))}
+      <div style={{
+        display:"flex",
+        flexDirection:"row",
+        gap:"1rem",
+        flexWrap:"wrap"
+      }}>
+        {/* Catalog */}
+        <div style={{
+          flex:1,
+          minWidth:"280px",
+          border:"1px solid #ccc",
+          padding:"0.5rem",
+          borderRadius:"8px",
+          touchAction:"pan-y"
+        }}>
+          <h3 style={{ textAlign:"center" }}>Catalog</h3>
+          <ul style={{ listStyle:"none", padding:0 }}>
+            {catalog.map(item=>(
+              <li key={item} style={{ display:"flex", alignItems:"center", marginBottom:"0.5rem", fontSize:"1rem" }}>
+                <span style={{ flex:1 }}>{item}</span>
+                <input type="number" min="1" value={catalogQty[item]}
+                  onChange={e=>setCatalogQty({...catalogQty,[item]:Number(e.target.value)})}
+                  style={{ width:"50px", marginRight:"0.5rem", padding:"0.25rem" }}
+                />
+                <button onClick={()=>addItem(item, catalogQty[item])} style={{ padding:"0.4rem 0.6rem", fontSize:"0.9rem" }}>Add</button>
+              </li>
+            ))}
+          </ul>
+          <div style={{ marginTop:"1rem", display:"flex", gap:"0.5rem", alignItems:"center", flexWrap:"wrap" }}>
+            <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Add custom item..." style={{ flex:1, padding:"0.5rem", minWidth:"120px" }}/>
+            <input type="number" min="1" value={qty} onChange={e=>setQty(Number(e.target.value))} style={{ width:"60px", padding:"0.5rem" }}/>
+            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}} style={{ padding:"0.4rem 0.6rem" }}>Add</button>
+          </div>
+        </div>
+
+        {/* Shopping list */}
+        <div style={{
+          flex:1,
+          minWidth:"280px",
+          border:"1px solid #ccc",
+          padding:"0.5rem",
+          borderRadius:"8px",
+          touchAction:"pan-y",
+          marginTop:"0.5rem" // spacing below catalog on mobile
+        }}>
+          <h3 style={{ textAlign:"center" }}>Shopping List</h3>
+          <ul style={{ listStyle:"none", padding:0 }}>
+            {items.map((item,index)=>(
+              <li
+                key={item.id}
+                draggable={!item.checked}
+                onDragStart={()=>onDragStart(index)}
+                onDragOver={onDragOver}
+                onDrop={()=>onDrop(index)}
+                onClick={()=>toggleItem(item.id)}
+                onDoubleClick={()=>removeItem(item.id)}
+                style={{
+                  display:"flex",
+                  justifyContent:"space-between",
+                  alignItems:"center",
+                  padding:"0.6rem",
+                  marginBottom:"0.25rem",
+                  background:"#fafafa",
+                  borderRadius:"6px",
+                  cursor: item.checked ? "not-allowed" : "grab",
+                  textDecoration: item.checked ? "line-through" : "none",
+                  color: item.checked ? "#777" : "inherit",
+                  fontSize:"1rem",
+                }}
+              >
+                {item.quantity} × {item.name}
+                <button
+                  onClick={e=>{ e.stopPropagation(); removeItem(item.id); }}
+                  style={{ marginLeft:"1rem", border:"none", background:"transparent", cursor:"pointer", color:"red", fontSize:"1.2rem" }}
+                >❌</button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
-
-      {/* Custom input */}
-      <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Add custom item..."
-          style={{ flex: 1, padding: "0.5rem" }}
-        />
-        <button onClick={() => addItem(input)}>Add</button>
-      </div>
-
-      {/* Item list */}
-      <ul style={{ listStyle: "none", padding: 0, marginTop: "1rem" }}>
-        {items.map((item) => (
-          <li
-            key={item.id}
-            onClick={() => toggleItem(item.id)}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              padding: "0.5rem",
-              marginBottom: "0.25rem",
-              background: "#fafafa",
-              borderRadius: "6px",
-              cursor: "pointer",
-              textDecoration: item.checked ? "line-through" : "none",
-              color: item.checked ? "#777" : "inherit",
-            }}
-          >
-            {item.name}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeItem(item.id);
-              }}
-              style={{
-                marginLeft: "1rem",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                color: "red",
-                fontSize: "1.2rem",
-              }}
-            >
-              ❌
-            </button>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
