@@ -14,10 +14,14 @@ export default function ShoppingList() {
   const [qty, setQty] = useState(1);
   const [catalogQty, setCatalogQty] = useState(catalog.reduce((acc,c)=>({...acc,[c]:1}),{}));
   const [dragIndex, setDragIndex] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
 
   useEffect(() => {
     const saved = localStorage.getItem("shoppingList");
     if(saved) setItems(JSON.parse(saved));
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -41,13 +45,8 @@ export default function ShoppingList() {
 
   const removeItem = (id) => setItems(items.filter(i=>i.id!==id));
 
-  const onDragStart = (index) => {
-    if(items[index].checked) return;
-    setDragIndex(index);
-  };
-
+  const onDragStart = (index) => setDragIndex(index);
   const onDragOver = (e) => e.preventDefault();
-
   const onDrop = (index) => {
     if(dragIndex === null || dragIndex === index) return;
     const newItems = [...items];
@@ -60,58 +59,42 @@ export default function ShoppingList() {
   return (
     <div style={{ maxWidth:"900px", margin:"0 auto", padding:"1rem", fontFamily:"sans-serif" }}>
       <h2 style={{ textAlign:"center" }}>🛒 Shopping List</h2>
-
       <div style={{
         display:"flex",
-        flexDirection:"row",
         gap:"1rem",
-        flexWrap:"wrap"
+        flexWrap:"wrap",
+        flexDirection: isMobile ? "column-reverse" : "row"
       }}>
         {/* Catalog */}
-        <div style={{
-          flex:1,
-          minWidth:"280px",
-          border:"1px solid #ccc",
-          padding:"0.5rem",
-          borderRadius:"8px",
-          touchAction:"pan-y"
-        }}>
+        <div style={{ flex:1, maxHeight:"70vh", overflowY:"auto", border:"1px solid #ccc", padding:"0.5rem", borderRadius:"8px" }}>
           <h3 style={{ textAlign:"center" }}>Catalog</h3>
           <ul style={{ listStyle:"none", padding:0 }}>
             {catalog.map(item=>(
-              <li key={item} style={{ display:"flex", alignItems:"center", marginBottom:"0.5rem", fontSize:"1rem" }}>
+              <li key={item} style={{ display:"flex", alignItems:"center", marginBottom:"0.5rem" }}>
                 <span style={{ flex:1 }}>{item}</span>
                 <input type="number" min="1" value={catalogQty[item]}
                   onChange={e=>setCatalogQty({...catalogQty,[item]:Number(e.target.value)})}
-                  style={{ width:"50px", marginRight:"0.5rem", padding:"0.25rem" }}
+                  style={{ width:"50px", marginRight:"0.5rem" }}
                 />
-                <button onClick={()=>addItem(item, catalogQty[item])} style={{ padding:"0.4rem 0.6rem", fontSize:"0.9rem" }}>Add</button>
+                <button onClick={()=>addItem(item, catalogQty[item])}>Add</button>
               </li>
             ))}
           </ul>
-          <div style={{ marginTop:"1rem", display:"flex", gap:"0.5rem", alignItems:"center", flexWrap:"wrap" }}>
-            <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Add custom item..." style={{ flex:1, padding:"0.5rem", minWidth:"120px" }}/>
+          <div style={{ marginTop:"1rem", display:"flex", gap:"0.5rem", alignItems:"center" }}>
+            <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Add custom item..." style={{ flex:1, padding:"0.5rem" }}/>
             <input type="number" min="1" value={qty} onChange={e=>setQty(Number(e.target.value))} style={{ width:"60px", padding:"0.5rem" }}/>
-            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}} style={{ padding:"0.4rem 0.6rem" }}>Add</button>
+            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}}>Add</button>
           </div>
         </div>
 
         {/* Shopping list */}
-        <div style={{
-          flex:1,
-          minWidth:"280px",
-          border:"1px solid #ccc",
-          padding:"0.5rem",
-          borderRadius:"8px",
-          touchAction:"pan-y",
-          marginTop:"0.5rem" // spacing below catalog on mobile
-        }}>
+        <div style={{ flex:1, maxHeight:"70vh", overflowY:"auto", border:"1px solid #ccc", padding:"0.5rem", borderRadius:"8px" }}>
           <h3 style={{ textAlign:"center" }}>Shopping List</h3>
           <ul style={{ listStyle:"none", padding:0 }}>
             {items.map((item,index)=>(
               <li
                 key={item.id}
-                draggable={!item.checked}
+                draggable
                 onDragStart={()=>onDragStart(index)}
                 onDragOver={onDragOver}
                 onDrop={()=>onDrop(index)}
@@ -121,14 +104,13 @@ export default function ShoppingList() {
                   display:"flex",
                   justifyContent:"space-between",
                   alignItems:"center",
-                  padding:"0.6rem",
+                  padding:"0.5rem",
                   marginBottom:"0.25rem",
                   background:"#fafafa",
                   borderRadius:"6px",
-                  cursor: item.checked ? "not-allowed" : "grab",
+                  cursor:"grab",
                   textDecoration: item.checked ? "line-through" : "none",
                   color: item.checked ? "#777" : "inherit",
-                  fontSize:"1rem",
                 }}
               >
                 {item.quantity} × {item.name}
