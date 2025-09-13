@@ -9,25 +9,35 @@ const catalogItems = [
   "Sugar","Salt","Cooking Oil","Flour","Baking Powder"
 ];
 
+// Encode items into compact Base64 URL
 function generateShareUrl(items) {
-  const encoded = encodeURIComponent(items.map(i => `${i.name}|${i.quantity}`).join(","));
+  if(items.length === 0) return "#";
+  const str = items.map(i => `${i.name}|${i.quantity}`).join(",");
+  const encoded = btoa(unescape(encodeURIComponent(str)));
   return `${window.location.origin}${window.location.pathname}?list=${encoded}`;
 }
 
+// Decode items from Base64 URL
 function getItemsFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const raw = params.get("list");
   if(!raw) return [];
-  return raw.split(",").map(item => {
-    const [name, quantity] = decodeURIComponent(item).split("|");
-    return { id: Date.now().toString() + Math.random(), name, quantity: Number(quantity)||1, checked:false };
-  });
+  try {
+    const decodedStr = decodeURIComponent(escape(atob(raw)));
+    return decodedStr.split(",").map(item => {
+      const [name, quantity] = item.split("|");
+      return { id: Date.now().toString() + Math.random(), name, quantity: Number(quantity)||1, checked:false };
+    });
+  } catch(e) {
+    return [];
+  }
 }
 
 export default function ShoppingList() {
   const [items, setItems] = useState([]);
   const [catalogQty, setCatalogQty] = useState(catalogItems.reduce((acc,c)=>({...acc,[c]:1}),{}));
 
+  // Populate list from URL on load
   useEffect(()=>{
     const urlItems = getItemsFromUrl();
     if(urlItems.length) setItems(urlItems);
