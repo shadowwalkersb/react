@@ -1,112 +1,95 @@
 import React, { useState, useEffect } from "react";
-import "./ShoppingList.css"; // import the new CSS
+import "./ShoppingList.css";
+
+const catalogItems = [
+  "Milk","Bread","Eggs","Butter","Cheese","Yogurt",
+  "Apples","Bananas","Oranges","Tomatoes","Potatoes",
+  "Onions","Carrots","Lettuce","Chicken","Beef",
+  "Fish","Rice","Pasta","Cereal","Coffee","Tea",
+  "Sugar","Salt","Cooking Oil","Flour","Baking Powder"
+];
+
+// Encode items into URL
+function generateShareUrl(items) {
+  const encoded = encodeURIComponent(items.map(i => `${i.name}|${i.quantity}`).join(","));
+  return `${window.location.origin}${window.location.pathname}?list=${encoded}`;
+}
+
+// Decode items from URL
+function getItemsFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("list");
+  if(!raw) return [];
+  return raw.split(",").map(item => {
+    const [name, quantity] = decodeURIComponent(item).split("|");
+    return { id: Date.now().toString() + Math.random(), name, quantity: Number(quantity)||1, checked:false };
+  });
+}
 
 export default function ShoppingList() {
-  const catalog = [
-    "Milk","Bread","Eggs","Butter","Cheese","Yogurt",
-    "Apples","Bananas","Oranges","Tomatoes","Potatoes",
-    "Onions","Carrots","Lettuce","Chicken","Beef",
-    "Fish","Rice","Pasta","Cereal","Coffee","Tea",
-    "Sugar","Salt","Cooking Oil","Flour","Baking Powder"
-  ];
-
   const [items, setItems] = useState([]);
-  const [input, setInput] = useState("");
-  const [qty, setQty] = useState(1);
-  const [catalogQty, setCatalogQty] = useState(catalog.reduce((acc,c)=>({...acc,[c]:1}),{}));
-  const [dragIndex, setDragIndex] = useState(null);
+  const [catalogQty, setCatalogQty] = useState(catalogItems.reduce((acc,c)=>({...acc,[c]:1}),{}));
 
-  useEffect(() => {
-    const saved = localStorage.getItem("shoppingList");
-    if(saved) setItems(JSON.parse(saved));
-  }, []);
+  // On mount, check URL for shared list
+  useEffect(()=>{
+    const urlItems = getItemsFromUrl();
+    if(urlItems.length) setItems(urlItems);
+  },[]);
 
-  useEffect(() => {
-    localStorage.setItem("shoppingList", JSON.stringify(items));
-  }, [items]);
-
-  const addItem = (name, quantity=1) => {
-    if(!name.trim()) return;
-    const newItem = { id: Date.now().toString(), name, quantity, checked:false };
-    setItems([...items, newItem]);
+  const addItem = (name) => {
+    setItems([...items,{id:Date.now()+Math.random(),name,quantity:catalogQty[name],checked:false}]);
   };
 
   const toggleItem = (id) => {
-    setItems(prev => {
-      const newItems = prev.map(i=>i.id===id ? {...i, checked:!i.checked}:i);
-      const unchecked = newItems.filter(i=>!i.checked);
-      const checked = newItems.filter(i=>i.checked);
-      return [...unchecked,...checked];
-    });
+    setItems(prev => prev.map(i => i.id===id ? {...i, checked:!i.checked} : i));
   };
 
   const removeItem = (id) => setItems(items.filter(i=>i.id!==id));
 
-  const onDragStart = (index) => setDragIndex(index);
-  const onDragOver = (e) => e.preventDefault();
-  const onDrop = (index) => {
-    if(dragIndex === null || dragIndex === index) return;
-    const newItems = [...items];
-    const [moved] = newItems.splice(dragIndex,1);
-    newItems.splice(index,0,moved);
-    setItems(newItems);
-    setDragIndex(null);
+  const shareList = () => {
+    const url = generateShareUrl(items);
+    navigator.clipboard.writeText(url);
+    alert("Shareable URL copied!");
   };
 
   return (
     <div className="shopping-container">
       <h2>🛒 Shopping List</h2>
-      <div className="container">
+
+      <div className="share-button-container">
+        <button onClick={shareList}>Share List</button>
+      </div>
+
+      <div className="flex-panels">
         {/* Catalog */}
-        <div className="catalog">
+        <div className="catalog-panel">
           <h3>Catalog</h3>
           <ul>
-            {catalog.map(item=>(
-              <li key={item}>
-                <span>{item}</span>
-                <input
-                  type="number"
-                  min="1"
-                  value={catalogQty[item]}
-                  onChange={e=>setCatalogQty({...catalogQty,[item]:Number(e.target.value)})}
+            {catalogItems.map(name => (
+              <li key={name}>
+                <span>{name}</span>
+                <input type="number" min="1" value={catalogQty[name]}
+                  onChange={e=>setCatalogQty({...catalogQty,[name]:Number(e.target.value)})}
                 />
-                <button onClick={()=>addItem(item, catalogQty[item])}>Add</button>
+                <button onClick={()=>addItem(name)}>Add</button>
               </li>
             ))}
           </ul>
-          <div className="custom-add">
-            <input
-              value={input}
-              onChange={e=>setInput(e.target.value)}
-              placeholder="Add custom item..."
-            />
-            <input
-              type="number"
-              min="1"
-              value={qty}
-              onChange={e=>setQty(Number(e.target.value))}
-            />
-            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}}>Add</button>
-          </div>
         </div>
 
         {/* Shopping list */}
-        <div className="shopping-list">
+        <div className="list-panel">
           <h3>Shopping List</h3>
           <ul>
-            {items.map((item,index)=>(
+            {items.map(i => (
               <li
-                key={item.id}
-                draggable
-                onDragStart={()=>onDragStart(index)}
-                onDragOver={onDragOver}
-                onDrop={()=>onDrop(index)}
-                onClick={()=>toggleItem(item.id)}
-                onDoubleClick={()=>removeItem(item.id)}
-                className={item.checked ? "checked" : ""}
+                key={i.id}
+                className={i.checked ? "checked" : ""}
+                onClick={()=>toggleItem(i.id)}
+                onDoubleClick={()=>removeItem(i.id)}
               >
-                {item.quantity} × {item.name}
-                <button onClick={e=>{ e.stopPropagation(); removeItem(item.id); }}>❌</button>
+                {i.quantity} × {i.name}
+                <button onClick={e=>{ e.stopPropagation(); removeItem(i.id); }}>❌</button>
               </li>
             ))}
           </ul>
