@@ -42,13 +42,11 @@ export default function ShoppingList() {
   const removeItem = (id) => setItems(items.filter(i=>i.id!==id));
 
   const onDragStart = (index) => {
-    if(items[index].checked) return; // prevent dragging checked items
+    if(items[index].checked) return;
     setDragIndex(index);
   };
 
-  const onDragOver = (e) => {
-    e.preventDefault();
-  };
+  const onDragOver = (e) => e.preventDefault();
 
   const onDrop = (index) => {
     if(dragIndex === null || dragIndex === index) return;
@@ -62,31 +60,55 @@ export default function ShoppingList() {
   return (
     <div style={{ maxWidth:"900px", margin:"0 auto", padding:"1rem", fontFamily:"sans-serif" }}>
       <h2 style={{ textAlign:"center" }}>🛒 Shopping List</h2>
-      <div style={{ display:"flex", gap:"1rem" }}>
+
+      <div style={{
+        display:"flex",
+        flexDirection:"row",
+        gap:"1rem",
+        flexWrap:"wrap"
+      }}>
         {/* Catalog */}
-        <div style={{ flex:1, maxHeight:"70vh", overflowY:"auto", border:"1px solid #ccc", padding:"0.5rem", borderRadius:"8px" }}>
+        <div style={{
+          flex:1,
+          minWidth:"280px",
+          maxHeight:"70vh",
+          overflowY:"auto",
+          border:"1px solid #ccc",
+          padding:"0.5rem",
+          borderRadius:"8px",
+          touchAction:"pan-y"
+        }}>
           <h3 style={{ textAlign:"center" }}>Catalog</h3>
           <ul style={{ listStyle:"none", padding:0 }}>
             {catalog.map(item=>(
-              <li key={item} style={{ display:"flex", alignItems:"center", marginBottom:"0.5rem" }}>
+              <li key={item} style={{ display:"flex", alignItems:"center", marginBottom:"0.5rem", fontSize:"1rem" }}>
                 <span style={{ flex:1 }}>{item}</span>
                 <input type="number" min="1" value={catalogQty[item]}
                   onChange={e=>setCatalogQty({...catalogQty,[item]:Number(e.target.value)})}
-                  style={{ width:"50px", marginRight:"0.5rem" }}
+                  style={{ width:"50px", marginRight:"0.5rem", padding:"0.25rem" }}
                 />
-                <button onClick={()=>addItem(item, catalogQty[item])}>Add</button>
+                <button onClick={()=>addItem(item, catalogQty[item])} style={{ padding:"0.4rem 0.6rem", fontSize:"0.9rem" }}>Add</button>
               </li>
             ))}
           </ul>
-          <div style={{ marginTop:"1rem", display:"flex", gap:"0.5rem", alignItems:"center" }}>
-            <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Add custom item..." style={{ flex:1, padding:"0.5rem" }}/>
+          <div style={{ marginTop:"1rem", display:"flex", gap:"0.5rem", alignItems:"center", flexWrap:"wrap" }}>
+            <input value={input} onChange={e=>setInput(e.target.value)} placeholder="Add custom item..." style={{ flex:1, padding:"0.5rem", minWidth:"120px" }}/>
             <input type="number" min="1" value={qty} onChange={e=>setQty(Number(e.target.value))} style={{ width:"60px", padding:"0.5rem" }}/>
-            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}}>Add</button>
+            <button onClick={()=>{addItem(input,qty); setInput(""); setQty(1)}} style={{ padding:"0.4rem 0.6rem" }}>Add</button>
           </div>
         </div>
 
         {/* Shopping list */}
-        <div style={{ flex:1, maxHeight:"70vh", overflowY:"auto", border:"1px solid #ccc", padding:"0.5rem", borderRadius:"8px" }}>
+        <div style={{
+          flex:1,
+          minWidth:"280px",
+          maxHeight:"70vh",
+          overflowY:"auto",
+          border:"1px solid #ccc",
+          padding:"0.5rem",
+          borderRadius:"8px",
+          touchAction:"pan-y"
+        }}>
           <h3 style={{ textAlign:"center" }}>Shopping List</h3>
           <ul style={{ listStyle:"none", padding:0 }}>
             {items.map((item,index)=>(
@@ -102,13 +124,14 @@ export default function ShoppingList() {
                   display:"flex",
                   justifyContent:"space-between",
                   alignItems:"center",
-                  padding:"0.5rem",
+                  padding:"0.6rem",
                   marginBottom:"0.25rem",
                   background:"#fafafa",
                   borderRadius:"6px",
                   cursor: item.checked ? "not-allowed" : "grab",
                   textDecoration: item.checked ? "line-through" : "none",
                   color: item.checked ? "#777" : "inherit",
+                  fontSize:"1rem",
                 }}
               >
                 {item.quantity} × {item.name}
