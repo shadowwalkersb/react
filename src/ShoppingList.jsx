@@ -60,21 +60,6 @@ export default function ShoppingList() {
       </div>
 
       <div className="flex-panels">
-        {/* Catalog */}
-        <div className="catalog-panel">
-          <h3>Catalog</h3>
-          <ul>
-            {catalogItems.map(name => (
-              <li key={name}>
-                <span>{name}</span>
-                <input type="number" min="1" value={catalogQty[name]}
-                  onChange={e=>setCatalogQty({...catalogQty,[name]:Number(e.target.value)})}
-                />
-                <button onClick={()=>addItem(name)}>Add</button>
-              </li>
-            ))}
-          </ul>
-        </div>
 
         {/* Shopping list */}
         <div className="list-panel">
@@ -93,6 +78,23 @@ export default function ShoppingList() {
             ))}
           </ul>
         </div>
+
+        {/* Catalog */}
+        <div className="catalog-panel">
+          <h3>Catalog</h3>
+          <ul>
+            {catalogItems.map(name => (
+              <li key={name}>
+                <span>{name}</span>
+                <input type="number" min="1" value={catalogQty[name]}
+                  onChange={e=>setCatalogQty({...catalogQty,[name]:Number(e.target.value)})}
+                />
+                <button onClick={()=>addItem(name)}>Add</button>
+              </li>
+            ))}
+          </ul>
+        </div>
+
       </div>
     </div>
   );
