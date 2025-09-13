@@ -4,7 +4,7 @@ A mobile-friendly React shopping list app. Add items from a catalog, custom item
 
 ## Live Demo
 
-[https://<USERNAME>.github.io/<REPO>](https://<USERNAME>.github.io/<REPO>)
+[https://<USERNAME>.github.io/<REPO>](https://shadowwalkersb.github.io/react)
 
 Replace `<USERNAME>` and `<REPO>` with your GitHub username and repository name.
 
