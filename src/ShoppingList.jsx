@@ -76,14 +76,12 @@ export default function ShoppingList() {
           <h3>Shopping List</h3>
           <ul>
             {items.map(i => (
-              <li
-                key={i.id}
-                className={i.checked ? "checked" : ""}
-                onClick={()=>toggleItem(i.id)}
-                onDoubleClick={()=>removeItem(i.id)}
-              >
-                {i.quantity} × {i.name}
-                <button onClick={e=>{ e.stopPropagation(); removeItem(i.id); }}>❌</button>
+              <li key={i.id} className={i.checked ? "checked" : ""}>
+                <span onClick={()=>toggleItem(i.id)}>{i.quantity} × {i.name}</span>
+                <div className="item-buttons">
+                  <button title="Cross/Uncross" onClick={()=>toggleItem(i.id)}>✔️</button>
+                  <button title="Remove" onClick={()=>removeItem(i.id)}>❌</button>
+                </div>
               </li>
             ))}
           </ul>

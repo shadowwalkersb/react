@@ -45,7 +45,7 @@ h2,h3 { text-align: center; margin: 0.5rem 0; }
   border-radius:6px;
 }
 
-.list-panel li.checked {
+.list-panel li.checked span {
   text-decoration: line-through;
   color: #777;
 }
@@ -54,12 +54,12 @@ h2,h3 { text-align: center; margin: 0.5rem 0; }
 
 .catalog-panel button { margin-left:0.5rem; }
 
-.list-panel button {
+.item-buttons button {
   border:none;
   background:transparent;
   cursor:pointer;
-  color:red;
   font-size:1.2rem;
+  margin-left:0.3rem;
 }
 
 @media (max-width:600px){
